@@ -1,0 +1,29 @@
+FROM openai/retro-agent:tensorflow
+
+# Needed for OpenCV.
+RUN apt-get update && \
+    apt-get install -y libgtk2.0-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Baselines has some unneeded and cumbersome dependencies,
+# so we manually fetch the deps we need.
+RUN . ~/venv/bin/activate && \
+    pip install scipy tqdm joblib zmq dill progressbar2 cloudpickle opencv-python keras
+
+ADD ppo2_agent.py ./agent.py
+
+# Agent for curiosity-driven exploration
+#ADD ppo2_curiosity.py ./agent.py
+
+ADD sonic_util.py .
+ADD baselines .
+
+# Add all required pretrained models here
+#ADD checkpoints_joint_ppo2/00300 ./pretrain_model
+
+# Add level classifier model here
+#Add architecture_level_classifier.json ./level_cls.json
+#Add model_weights_level_classifier.h5 ./level_cls.h5
+
+CMD ["python", "/root/compo/baselines/baselines/setup.py", "install"]
+CMD ["python", "-u", "/root/compo/agent.py"]

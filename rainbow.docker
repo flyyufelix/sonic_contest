@@ -1,0 +1,25 @@
+FROM openai/retro-agent:tensorflow
+
+# Needed for OpenCV.
+RUN apt-get update && \
+    apt-get install -y libgtk2.0-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Baselines has some unneeded and cumbersome dependencies,
+# so we manually fetch the deps we need.
+RUN . ~/venv/bin/activate && \
+    pip install scipy tqdm joblib zmq dill progressbar2 cloudpickle opencv-python pandas
+
+ADD rainbow_agent.py ./agent.py
+ADD sonic_util.py .
+ADD baselines .
+ADD anyrl-py .
+
+# Add pretrained models here
+ADD checkpoints_rainbow/model-700.data-00000-of-00001 ./pretrained_model.data-00000-of-00001
+ADD checkpoints_rainbow/model-700.index ./pretrained_model.index
+ADD checkpoints_rainbow/model-700.meta ./pretrained_model.meta
+
+CMD ["python", "/root/compo/baselines/baselines/setup.py", "install"]
+CMD ["python", "/root/compo/anyrl-py/setup.py", "install"]
+CMD ["python", "-u", "/root/compo/agent.py"]
